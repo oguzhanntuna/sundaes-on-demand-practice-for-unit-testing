@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen, waitForElementToBeRemoved } from "@testing-library/react";
+import userEvent from '@testing-library/user-event';
 import SummaryForm from '../SummaryForm';
 
 test('Initial conditions', () => {
@@ -17,9 +18,28 @@ test('Checkbox enables button on first click and disables on second click.', () 
     const checkbox = screen.getByRole('checkbox', { name: 'I agree to Terms and Conditions' });
     const submitButton = screen.getByRole('button', { name: 'Confirm order' });
 
-    fireEvent.click(checkbox);
+    userEvent.click(checkbox);
     expect(submitButton).toBeEnabled();
 
-    fireEvent.click(checkbox);
+    userEvent.click(checkbox);
     expect(submitButton).toBeDisabled();
 });
+
+test('popover responds to hover', async () => {
+    render(<SummaryForm />);
+
+    // popover starts out hidden
+    const nullPopover = screen.queryByText('No ice cream will actually be delivered');
+    expect(nullPopover).not.toBeInTheDocument();
+
+    // popover appears upon mouseover of checkbox label
+    const termsAndConditions = screen.getByText('Terms and Conditions');
+    userEvent.hover(termsAndConditions);
+
+    const popover = screen.getByText('No ice cream will actually be delivered');
+    expect(popover).toBeInTheDocument();
+
+    // popover disappears when mouse out
+    userEvent.unhover(termsAndConditions);
+    await waitForElementToBeRemoved(() => screen.queryByText('No ice cream will actually be delivered'));
+})
